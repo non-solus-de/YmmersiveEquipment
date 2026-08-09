@@ -11,7 +11,6 @@ import com.hypixel.hytale.protocol.SoundCategory;
 import com.hypixel.hytale.server.core.asset.type.item.config.Item;
 import com.hypixel.hytale.server.core.asset.type.soundevent.config.SoundEvent;
 import com.hypixel.hytale.server.core.entity.InteractionContext;
-import com.hypixel.hytale.server.core.inventory.InventoryComponent;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.inventory.transaction.ItemStackSlotTransaction;
 import com.hypixel.hytale.server.core.modules.entity.component.TransformComponent;
@@ -21,7 +20,6 @@ import com.hypixel.hytale.server.core.modules.interaction.interaction.config.Sim
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.SoundUtil;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
-import net.conczin.equipment.utils.Utils;
 import org.joml.Vector3d;
 
 import javax.annotation.Nonnull;
@@ -45,8 +43,12 @@ public class TeleportInteraction extends SimpleInstantInteraction {
             return;
         }
 
-        // Get the remembered position from item metadata
-        Vector3d rememberedPosition = Utils.getData(ref, "YmmersiveEquipmentPosition", Vector3dUtil.CODEC);
+        // Read the same held-item snapshot that initiated this interaction. Reading
+        // the live hotbar can observe a different stack after a state transition.
+        ItemStack itemInHand = context.getHeldItem();
+        Vector3d rememberedPosition = itemInHand == null
+                ? null
+                : itemInHand.getFromMetadataOrNull("YmmersiveEquipmentPosition", Vector3dUtil.CODEC);
         if (rememberedPosition == null) {
             context.getState().state = InteractionState.Failed;
             return;
@@ -72,7 +74,6 @@ public class TeleportInteraction extends SimpleInstantInteraction {
         }
 
         // Change item state back to default (remove state)
-        ItemStack itemInHand = InventoryComponent.getItemInHand(commandBuffer, ref);
         if (itemInHand != null) {
             ItemStack newItemInHand = withDefaultState(itemInHand);
             ItemStackSlotTransaction transaction = context.getHeldItemContainer()
@@ -84,9 +85,14 @@ public class TeleportInteraction extends SimpleInstantInteraction {
         }
     }
 
-    public ItemStack withDefaultState(ItemStack itemStack) {
+    private ItemStack withDefaultState(ItemStack itemStack) {
+        // State variants are separate generated Item assets with an id of the form
+        // "*<baseId>_State_<StateName>" (see AssetExtraInfo.generateKey()).
+        // InteractionContext.getOriginalItemType() is NOT the base item here - it is
+        // whatever item was held when this interaction context was created, i.e. the
+        // Charged item itself - so it must not be used to derive the default state.
         Item item = itemStack.getItem();
-        String defaultState = item.getId().substring(1, item.getId().lastIndexOf("_State_"));
-        return new ItemStack(defaultState, itemStack.getQuantity(), itemStack.getDurability(), itemStack.getMaxDurability(), itemStack.getMetadata());
+        String defaultItemId = item.getId().substring(1, item.getId().lastIndexOf("_State_"));
+        return new ItemStack(defaultItemId, itemStack.getQuantity(), itemStack.getDurability(), itemStack.getMaxDurability(), itemStack.getMetadata());
     }
 }

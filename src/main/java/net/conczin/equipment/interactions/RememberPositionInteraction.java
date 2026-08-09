@@ -17,7 +17,6 @@ import com.hypixel.hytale.server.core.modules.interaction.interaction.config.Sim
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.SoundUtil;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
-import net.conczin.equipment.utils.Utils;
 import org.joml.Vector3d;
 
 import javax.annotation.Nonnull;
@@ -49,9 +48,10 @@ public class RememberPositionInteraction extends SimpleInstantInteraction {
             return;
         }
 
-        // Store the position in the item's metadata
+        // Store the position and switch state in one ItemStack update.  Updating the
+        // hotbar separately from the interaction context can lose metadata when the
+        // server applies the held-item transaction after this interaction returns.
         Vector3d position = transform.getPosition();
-        Utils.setData(ref, commandBuffer, "YmmersiveEquipmentPosition", Vector3dUtil.CODEC, position);
 
         // Play avatar powers enable sound
         PlayerRef playerRef = commandBuffer.getComponent(ref, PlayerRef.getComponentType());
@@ -63,7 +63,9 @@ public class RememberPositionInteraction extends SimpleInstantInteraction {
         // Change item state to "charged"
         ItemStack itemInHand = context.getHeldItem();
         if (itemInHand != null) {
-            ItemStack newItemInHand = itemInHand.withState("Charged");
+            ItemStack newItemInHand = itemInHand
+                    .withMetadata("YmmersiveEquipmentPosition", Vector3dUtil.CODEC, position)
+                    .withState("Charged");
             ItemStackSlotTransaction transaction = context.getHeldItemContainer()
                     .setItemStackForSlot(context.getHeldItemSlot(), newItemInHand);
             if (!transaction.succeeded()) {

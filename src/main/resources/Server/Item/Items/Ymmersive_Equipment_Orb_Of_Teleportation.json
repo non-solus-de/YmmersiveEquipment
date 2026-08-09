@@ -73,12 +73,12 @@
         "Primary": {
           "Interactions": [
             {
+              "Type": "Ymmersive_Equipment_Teleport"
+            },
+            {
               "Type": "ModifyInventory",
               "AdjustHeldItemDurability": -1,
               "BrokenItem": "Empty"
-            },
-            {
-              "Type": "Ymmersive_Equipment_Teleport"
             }
           ]
         }

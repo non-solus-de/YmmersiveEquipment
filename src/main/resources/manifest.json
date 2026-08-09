@@ -1,6 +1,6 @@
 {
   "Group": "Conczin",
-  "Name": "Ymmersive Equipment",
+  "Name": "[Nox] Ymmersive Equipment",
   "Version": "0.0.1",
   "Description": "Various handy tools.",
   "Authors": [
@@ -8,6 +8,9 @@
       "Name": "Conczin",
       "Email": "conczin@gmail.com",
       "Url": "https://conczin.net/"
+    },
+    {
+      "Name": "Noxitanius"
     }
   ],
   "Website": "https://conczin.net/",
