@@ -1,3 +1,6 @@
 /build/
 /.gradle/
 .directory
+
+# Eclipse/VS-Code-Java-Build-Ausgabe
+/bin/
